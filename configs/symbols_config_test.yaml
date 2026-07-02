@@ -1,0 +1,17 @@
+# ============================================================
+# TEST Symbol Config — 5 symbols only (for smoke testing)
+# ============================================================
+
+symbols:
+  test_batch:
+    - BTCUSDT       # Large cap (already downloaded — will skip)
+    - ETHUSDT       # Large cap
+    - SOLUSDT       # Layer 1
+    - LINKUSDT      # DeFi blue chip
+    - MATICUSDT     # Layer 2
+
+collection:
+  intervals: ["5m", "1h"]           # Only 2 intervals for test
+  start_date: "2022-01-01"
+  end_date: null
+  output_dir: "data/raw"

@@ -1,0 +1,124 @@
+# ============================================================
+# Symbol Universe — 57 Symbols (Institutional Selection)
+# ============================================================
+# Selection criteria:
+#   - Available on Binance Spot from Jan 2022 (survivorship-bias free)
+#   - Minimum $10M average daily volume (liquidity guarantee)
+#   - Diversified across sectors (not correlation blind)
+#   - USDT quoted (standardized base)
+
+symbols:
+  # ----------------------------------------------------------
+  # TIER 1: Large Cap (Market Leaders — 5 symbols)
+  # Weight: ~60% of crypto market cap
+  # ----------------------------------------------------------
+  large_cap:
+    - BTCUSDT       # Bitcoin — market beta reference
+    - ETHUSDT       # Ethereum — smart contract leader
+    - BNBUSDT       # Binance Coin — exchange token
+    - XRPUSDT       # Ripple — payments
+    - ADAUSDT       # Cardano — PoS Layer 1
+
+  # ----------------------------------------------------------
+  # TIER 2: Layer 1 Blockchains (10 symbols)
+  # Foundation infrastructure, high correlation with ETH
+  # ----------------------------------------------------------
+  layer1:
+    - SOLUSDT       # Solana
+    - AVAXUSDT      # Avalanche
+    - DOTUSDT       # Polkadot
+    - NEARUSDT      # NEAR Protocol
+    - ATOMUSDT      # Cosmos
+    - ALGOUSDT      # Algorand
+    - FTMUSDT       # Fantom
+    - EGLDUSDT      # MultiversX (Elrond)
+    - HBARUSDT      # Hedera
+    - VETUSDT       # VeChain
+
+  # ----------------------------------------------------------
+  # TIER 3: DeFi Blue Chips (10 symbols)
+  # Decentralized finance leaders
+  # ----------------------------------------------------------
+  defi:
+    - LINKUSDT      # Chainlink — oracle
+    - UNIUSDT       # Uniswap — DEX
+    - AAVEUSDT      # Aave — lending
+    - MKRUSDT       # MakerDAO — stablecoin
+    - CRVUSDT       # Curve — stableswap
+    - COMPUSDT      # Compound — lending
+    - SNXUSDT       # Synthetix — derivatives
+    - SUSHIUSDT     # Sushi — DEX
+    - 1INCHUSDT     # 1inch — DEX aggregator
+    - YFIUSDT       # Yearn Finance
+
+  # ----------------------------------------------------------
+  # TIER 4: Layer 2 & Scaling (5 symbols)
+  # ----------------------------------------------------------
+  layer2:
+    - MATICUSDT     # Polygon
+    - LRCUSDT       # Loopring
+    - IMXUSDT       # Immutable X
+    - METISUSDT     # Metis
+    - BOBAUSDT      # Boba Network
+
+  # ----------------------------------------------------------
+  # TIER 5: Gaming & Metaverse (5 symbols)
+  # ----------------------------------------------------------
+  gaming:
+    - SANDUSDT      # The Sandbox
+    - MANAUSDT      # Decentraland
+    - AXSUSDT       # Axie Infinity
+    - GALAUSDT      # Gala Games
+    - ENJUSDT       # Enjin
+
+  # ----------------------------------------------------------
+  # TIER 6: Exchange & Infrastructure (5 symbols)
+  # ----------------------------------------------------------
+  infrastructure:
+    - GRTUSDT       # The Graph — indexing
+    - FILUSDT       # Filecoin — storage
+    - ARUSDT        # Arweave — permanent storage
+    - RENDERUSDT    # Render — GPU compute
+    - LPTUSDT       # Livepeer — video
+
+  # ----------------------------------------------------------
+  # TIER 7: Older Established Alts (7 symbols)
+  # ----------------------------------------------------------
+  established:
+    - LTCUSDT       # Litecoin
+    - BCHUSDT       # Bitcoin Cash
+    - ETCUSDT       # Ethereum Classic
+    - XLMUSDT       # Stellar
+    - EOSUSDT       # EOS
+    - IOTAUSDT      # IOTA
+    - ZILUSDT       # Zilliqa
+
+  # ----------------------------------------------------------
+  # TIER 8: Privacy & Others (5 symbols)
+  # ----------------------------------------------------------
+  privacy_others:
+    - XMRUSDT       # Monero — privacy
+    - DASHUSDT      # Dash — payments
+    - ZECUSDT       # Zcash — privacy
+    - QTUMUSDT      # Qtum
+    - ONEUSDT       # Harmony
+
+  # ----------------------------------------------------------
+  # TIER 9: New Generation (5 symbols)
+  # Added 2022-2023, proven survivors
+  # ----------------------------------------------------------
+  new_gen:
+    - APTUSDT       # Aptos
+    - OPUSDT        # Optimism
+    - ARBUSDT       # Arbitrum
+    - INJUSDT       # Injective
+    - SUIUSDT       # Sui
+
+# ============================================================
+# Collection settings
+# ============================================================
+collection:
+  intervals: ["5m", "15m", "1h", "4h"]
+  start_date: "2022-01-01"
+  end_date: null  # null = up to latest available
+  output_dir: "data/raw"
