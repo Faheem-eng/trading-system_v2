@@ -1,0 +1,22 @@
+features:
+  enabled_modules:
+    price: true
+    volume: true
+    time: true
+    momentum: true
+    trend: true
+    volatility: true
+    volume_indicators: true
+    microstructure: true
+    multi_timeframe: true
+    cross_asset: true
+    regime: true
+    alpha_factors: true
+    microstructure_quality: true
+    risk_metrics: true
+
+  reference_symbols:
+    btc: "BTCUSDT"
+    eth: "ETHUSDT"
+
+  warmup_bars: 300

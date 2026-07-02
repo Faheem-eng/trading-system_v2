@@ -1,0 +1,11 @@
+targets:
+  horizons: [5, 15, 60]
+
+  binary_threshold: 0.001
+  flat_threshold: 0.001
+
+  triple_barrier:
+    profit_multiplier: 3.0
+    stop_multiplier: 3.0
+    max_holding_bars: 50
+    atr_period: 14

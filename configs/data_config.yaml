@@ -1,0 +1,18 @@
+data_collection:
+  start_date: "2022-01-01"
+  end_date: null
+
+  intervals:
+    - "5m"
+    - "15m"
+    - "1h"
+    - "4h"
+
+  exchange: "binance"
+  market_type: "spot"
+  min_volume_usd_24h: 1000000
+
+  storage:
+    db_path: "data/trading_system.db"
+    parquet_dir: "data/features"
+    compression: "snappy"

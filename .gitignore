@@ -1,0 +1,32 @@
+# Data files (large, regeneratable)
+data/
+*.db
+*.db-wal
+*.db-shm
+*.parquet
+*.csv
+*.h5
+
+# Python environment
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Logs
+*.log
+logs/
+
+# Secrets
+.env
+secrets.yaml
+
+# Model files
+*.pkl
+*.joblib
+
+# IDE
+.vscode/settings.json.bak
+
+# Jupyter
+.ipynb_checkpoints/

@@ -1,0 +1,15 @@
+rules:
+  market_filters:
+    weekend_size_reduction_pct: 0.5
+    min_volume_ratio: 0.5
+    max_spread_pct: 0.005
+
+  regime_rules:
+    btc_ma_period: 200
+    downtrend_size_multiplier: 0.5
+    long_only_in_downtrend: true
+
+  confidence_thresholds:
+    full_size: 0.60
+    half_size: 0.50
+    no_trade: 0.50

@@ -1,0 +1,12 @@
+splits:
+  train_ratio: 0.76
+  val_ratio: 0.12
+  test_ratio: 0.12
+
+  gap_bars: 60
+
+  walk_forward:
+    enabled: false
+    train_window_months: 6
+    test_window_months: 1
+    step_months: 1
