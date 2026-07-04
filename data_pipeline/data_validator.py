@@ -241,7 +241,7 @@ def validate_all(data_dir: str = "data/raw") -> dict[str, Any]:
         by_interval[interval]["files"] += 1
         by_interval[interval]["bars"] += r["n_bars"]
 
-    print(f"\nPer-interval:")
+    print("\nPer-interval:")
     for interval in ["5m", "15m", "1h", "4h"]:
         if interval in by_interval:
             d = by_interval[interval]
@@ -250,7 +250,7 @@ def validate_all(data_dir: str = "data/raw") -> dict[str, Any]:
 
     # Failed files list
     if n_fail > 0:
-        print(f"\nFAILED FILES:")
+        print("\nFAILED FILES:")
         for r in results:
             if r["issues"]:
                 print(f"  {r['file']}")
