@@ -103,7 +103,7 @@ def compute_alpha_features(df: pd.DataFrame) -> pd.DataFrame:
     )
     path_vol = log_ret.rolling(window=lookback, min_periods=lookback).std()
     mom_series = out["momentum_skip"]
-    out["momentum_quality"] = mom_series / (
+    out["alpha_momentum_quality"] = mom_series / (
         path_vol * np.sqrt(lookback) + EPS
     )
 
@@ -137,7 +137,7 @@ def compute_alpha_features(df: pd.DataFrame) -> pd.DataFrame:
 ALPHA_FEATURE_NAMES = [
     "momentum_skip",
     "short_term_reversal",
-    "momentum_quality",
+    "alpha_momentum_quality",
     "volume_momentum",
     "momentum_zscore",
 ]
