@@ -1,22 +1,22 @@
 {
   "XRPUSDT": {
     "position": "CASH",
-    "since": "2026-07-08 03:41 UTC",
-    "last_proba": 0.4933
+    "since": "2026-07-08 09:21 UTC",
+    "last_proba": 0.4701
   },
   "SOLUSDT": {
     "position": "LONG",
-    "since": "2026-07-08 03:41 UTC",
-    "last_proba": 0.6504
+    "since": "2026-07-08 09:21 UTC",
+    "last_proba": 0.5826
   },
   "BTCUSDT": {
     "position": "CASH",
-    "since": "2026-07-08 03:41 UTC",
-    "last_proba": 0.4408
+    "since": "2026-07-08 09:21 UTC",
+    "last_proba": 0.4469
   },
   "MATICUSDT": {
     "position": "CASH",
-    "since": "2026-07-08 03:41 UTC",
+    "since": "2026-07-08 09:13 UTC",
     "last_proba": 0.5071
   }
 }

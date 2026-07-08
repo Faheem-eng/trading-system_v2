@@ -62,7 +62,10 @@ TH_IN = 0.55
 TH_OUT = 0.45
 EMBARGO = 25
 WARMUP = 300
-SYMBOLS = ["XRPUSDT", "SOLUSDT", "BTCUSDT", "MATICUSDT"]
+# MATIC retired 2026-07-08: Binance MATIC→POL rebrand killed fresh data.
+# POL rejected: only ~1.5yr history, our 4.5yr validation doesn't transfer.
+# See docs/OPERATIONS_RUNBOOK.md §universe. Universe = 3 clean symbols.
+SYMBOLS = ["XRPUSDT", "SOLUSDT", "BTCUSDT"]
 BTC = "BTCUSDT"
 
 STATE_FILE = Path("signals/state.json")

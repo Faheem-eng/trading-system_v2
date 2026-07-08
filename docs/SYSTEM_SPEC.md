@@ -1,6 +1,7 @@
 # TRADING SYSTEM V2 — FINAL SYSTEM SPECIFICATION
-**Version:** 1.0.0 | **Status:** LOCKED (Phase 6) | **Date:** July 2026
-
+**Universe:** XRPUSDT, SOLUSDT, BTCUSDT (Binance Spot)
+(MATICUSDT retired 2026-07-08 — POL rebrand, see OPERATIONS_RUNBOOK.md)
+**Version:** 1.1.0 | **Status:** LOCKED (Phase 6) | **Date:** July 2026
 Yeh document poore system ka single source of truth hai.
 Koi bhi change ko is document mein version-bump ke saath aana hoga.
 
