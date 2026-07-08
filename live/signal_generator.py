@@ -33,7 +33,7 @@ from typing import Any, Optional
 import numpy as np
 import pandas as pd
 import lightgbm as lgb
-
+import live.paper_logger
 from core.logger import get_logger
 from ml.targets.triple_barrier import compute_triple_barrier
 from ml.models.binary_1h import LGBM_PARAMS, _feature_cols
@@ -52,7 +52,6 @@ from features.regime.regime_features import compute_regime_features
 from features.alpha_factors.alpha_features import compute_alpha_features
 from features.microstructure_quality.quality_features import compute_quality_features
 from features.risk_metrics.risk_features import compute_risk_features
-
 logger = get_logger(__name__)
 
 SIGNAL_GENERATOR_VERSION = "1.0.0"
@@ -294,9 +293,19 @@ if __name__ == "__main__":
             print(f"{sym:10s} {'—':>7s} {'NO_SIG':>7s}  prediction failure")
             continue
 
+        prev_pos = state.get(sym, {}).get("position", "CASH")
         pos, note = apply_overlay(sym, proba, state)
         results.append({"symbol": sym, "proba": proba, "position": pos})
         print(f"{sym:10s} {proba:>7.3f} {pos:>7s}  {note}")
+
+        # Auto paper-log on position CHANGE only (7.1)
+        if pos != prev_pos:
+            action = "ENTER_LONG" if pos == "LONG" else "EXIT_LONG"
+            trade = live.paper_logger.log_trade(sym, action, proba)
+            rt = f" | round-trip: {trade['net_return']}" \
+                if trade["net_return"] else ""
+            print(f"{'':10s} 📝 logged: {action} @ "
+                  f"{trade['price'] if trade['price'] else 'MANUAL-FILL'}{rt}")
 
     save_state(state)
 

@@ -1,0 +1,20 @@
+{
+  "consecutive_outside": 0,
+  "history": [
+    {
+      "month": "2026-07",
+      "strategy_return": 0.0,
+      "inside_envelope": true
+    },
+    {
+      "month": "2026-07",
+      "strategy_return": 0.0,
+      "inside_envelope": true
+    },
+    {
+      "month": "2026-07",
+      "strategy_return": 0.0001,
+      "inside_envelope": true
+    }
+  ]
+}
