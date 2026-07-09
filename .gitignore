@@ -30,3 +30,7 @@ secrets.yaml
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Live trading credentials — NEVER commit
+.env
+.env.local
