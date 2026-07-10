@@ -33,4 +33,4 @@ secrets.yaml
 
 # Live trading credentials — NEVER commit
 .env
-.env.local
+.env.local.env
