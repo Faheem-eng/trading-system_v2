@@ -1,42 +1,39 @@
 """
 live/execution.py
 
-Phase 8 Prep: Execution module for the regime overlay strategy.
+Phase 8: Execution module for the regime overlay strategy.
 
 SAFETY ARCHITECTURE (three independent layers):
     LAYER 1 — Mode gate (3 modes via LIVE_TRADING in .env):
         DRY_RUN  (false/missing): log only, no exchange calls
         TESTNET  (testnet):       real orders, FAKE money
                                   (Binance Spot Testnet via ccxt
-                                   set_sandbox_mode — the ONLY
-                                   reliable way; manual URL overrides
-                                   silently fall through to production
-                                   and cause "Invalid Api-Key ID")
+                                   set_sandbox_mode — manual URL
+                                   overrides silently fall through
+                                   to production; never use them)
         LIVE     (true):          real orders, REAL money
 
     LAYER 2 — Console confirmation:
-        TESTNET and LIVE both require typing "CONFIRM" (exact,
-        uppercase) before any order is placed.
+        TESTNET and LIVE require typing "CONFIRM" (exact, uppercase).
 
     LAYER 3 — Hard position caps:
         Per-symbol max: 25% of TOTAL_CAPITAL_USDT regardless of math.
 
+UNIVERSE (v1.3.0 — expanded 2026-07-11):
+    XRP, SOL, BTC (original, validated Phase 3-4)
+    BNB, ADA (added after 4h walk-forward 4/5 folds IC>0
+              + overlay backtest beats B&H)
+    LINK tested and REJECTED (overlay -45.9% vs B&H -46.5%,
+    both negative — no genuine value-add).
+
 POSITION SIZING (SYSTEM_SPEC.md sec.3):
     60% of total capital deployed when fully invested.
-    Equal-weight across 3 symbols -> 20% per symbol when LONG.
+    Equal-weight across 5 symbols -> 12% per symbol when LONG.
     Exit = full position close (no partial exits).
-
-EXECUTION FLOW:
-    1. Read current signals from signals/state.json
-    2. Fetch actual open positions from the exchange
-    3. Diff: what SHOULD be vs what IS
-    4. For each change: fresh price -> size -> lot-size -> order
-    5. Log everything to signals/execution_log.csv (append-only)
 
 USAGE:
     python -m live.execution
-    (mode is controlled by LIVE_TRADING in .env — never by flags,
-     so a stray command-line argument can never flip you into live)
+    (mode controlled ONLY by LIVE_TRADING in .env)
 """
 
 from __future__ import annotations
@@ -53,7 +50,7 @@ from core.logger import get_logger
 
 logger = get_logger(__name__)
 
-EXECUTION_VERSION = "1.2.0"
+EXECUTION_VERSION = "1.3.0"
 
 
 # ============================================================
@@ -63,11 +60,10 @@ EXECUTION_VERSION = "1.2.0"
 
 def _load_env() -> None:
     """
-    Load .env using python-dotenv with an absolute path anchored to
-    the project root (this file's parent's parent). A relative
-    Path(".env") breaks when the working directory differs (e.g.
-    Task Scheduler runs) — that bug cost us a debugging session.
-    Falls back to a manual parse if dotenv is not installed.
+    Load .env with an absolute path anchored to the project root.
+    A relative Path(".env") breaks when the working directory
+    differs (e.g. Task Scheduler runs).
+    Falls back to manual parsing if python-dotenv is missing.
     """
     env_path = Path(__file__).parent.parent / ".env"
     try:
@@ -104,16 +100,17 @@ API_KEY       = os.environ.get("BINANCE_API_KEY", "")
 API_SECRET    = os.environ.get("BINANCE_API_SECRET", "")
 TOTAL_CAPITAL = float(os.environ.get("TOTAL_CAPITAL_USDT", "10000"))
 
-# ---- Locked allocation (SYSTEM_SPEC.md sec.3) ----
+# ---- Locked allocation (SYSTEM_SPEC.md sec.3, v1.2.0) ----
 ALLOCATION_FRACTION = 0.60
-SYMBOLS             = ["XRPUSDT", "SOLUSDT", "BTCUSDT"]
+SYMBOLS = ["XRPUSDT", "SOLUSDT", "BTCUSDT", "BNBUSDT", "ADAUSDT"]
 N_SYMBOLS           = len(SYMBOLS)
-PER_SYMBOL_FRACTION = ALLOCATION_FRACTION / N_SYMBOLS   # 0.20 each
+PER_SYMBOL_FRACTION = ALLOCATION_FRACTION / N_SYMBOLS   # 0.12 each
 PER_SYMBOL_CAP      = 0.25      # hard ceiling, belt + suspenders
 
 # ---- Execution safety ----
 MAX_RETRIES     = 3
 RETRY_DELAY_SEC = 5.0
+DUST_THRESHOLD_USDT = 10.0      # holdings below this = flat
 
 STATE_FILE = Path("signals/state.json")
 EXEC_LOG   = Path("signals/execution_log.csv")
@@ -130,16 +127,15 @@ EXEC_LOG_HEADER = [
 
 def _get_exchange():
     """
-    Build the correctly-configured ccxt Binance instance for the
-    current mode.
+    Build the correctly-configured ccxt Binance instance.
 
-    DRY_RUN : public-only client, no credentials needed.
-    TESTNET : authenticated client -> Binance Spot Testnet via
-              ccxt's built-in set_sandbox_mode(True).
-    LIVE    : authenticated client -> production Binance Spot.
+    DRY_RUN : public-only client, no credentials.
+    TESTNET : authenticated -> Binance Spot Testnet via
+              ccxt set_sandbox_mode(True).
+    LIVE    : authenticated -> production Binance Spot.
 
     Raises:
-        RuntimeError if credentials are missing in TESTNET/LIVE mode.
+        RuntimeError if credentials missing in TESTNET/LIVE.
     """
     try:
         import ccxt
@@ -169,7 +165,7 @@ def _get_exchange():
 
 
 def _fetch_ticker(exchange, symbol: str) -> Optional[float]:
-    """Current market price. None on failure (fail-safe: skip trade)."""
+    """Current market price. None on failure (fail-safe: skip)."""
     try:
         t = exchange.fetch_ticker(symbol.replace("USDT", "/USDT"))
         last = t.get("last")
@@ -181,12 +177,11 @@ def _fetch_ticker(exchange, symbol: str) -> Optional[float]:
 
 def _fetch_open_positions(exchange) -> dict[str, float]:
     """
-    Actual spot balances for our symbols -> {symbol: qty_held}.
+    Actual spot balances -> {symbol: qty_held}.
 
-    Dust filter: balances worth < 10 USDT are treated as flat.
-    (Testnet resets and lot-size rounding leave tiny residues like
-    0.001 SOL; without the filter these would be misread as open
-    LONG positions and block real entries.)
+    Dust filter: holdings worth < DUST_THRESHOLD_USDT are treated
+    as flat. Testnet resets and lot-size rounding leave residues
+    (0.001 SOL etc.) that would otherwise be misread as open LONGs.
     """
     positions: dict[str, float] = {s: 0.0 for s in SYMBOLS}
     if DRY_RUN:
@@ -200,8 +195,7 @@ def _fetch_open_positions(exchange) -> dict[str, float]:
                 continue
             price = _fetch_ticker(exchange, sym)
             value = qty * price if price else 0.0
-            # Dust threshold: ignore holdings below 10 USDT
-            positions[sym] = qty if value >= 10.0 else 0.0
+            positions[sym] = qty if value >= DUST_THRESHOLD_USDT else 0.0
     except Exception as e:
         logger.error(f"Balance fetch failed - {e}")
     return positions
@@ -210,7 +204,7 @@ def _fetch_open_positions(exchange) -> dict[str, float]:
 def _lot_size_qty(exchange, symbol: str, usdt_amount: float,
                   price: float) -> Optional[float]:
     """
-    Convert a USDT amount into base-asset quantity, respecting the
+    Convert USDT amount into base-asset quantity, respecting the
     exchange LOT_SIZE filter (stepSize, minQty).
 
     Returns:
@@ -230,7 +224,9 @@ def _lot_size_qty(exchange, symbol: str, usdt_amount: float,
         if step and step > 0:
             raw_qty = (raw_qty // step) * step
         if min_qty and raw_qty < min_qty:
-            logger.warning(f"{symbol}: qty {raw_qty:.6f} < minQty {min_qty}")
+            logger.warning(
+                f"{symbol}: qty {raw_qty:.6f} < minQty {min_qty}"
+            )
             return None
     except Exception as e:
         logger.warning(f"{symbol}: lot-size fetch failed - {e}")
@@ -252,8 +248,9 @@ def _ensure_exec_log() -> None:
 
 
 def _log_execution(symbol: str, side: str, qty: float, price: float,
-                   usdt_val: float, status: str, notes: str = "") -> None:
-    """Append one row to execution_log.csv (append-only audit trail)."""
+                   usdt_val: float, status: str,
+                   notes: str = "") -> None:
+    """Append one row to execution_log.csv (append-only audit)."""
     _ensure_exec_log()
     now = datetime.now(timezone.utc)
     row = [
@@ -273,8 +270,8 @@ def _log_execution(symbol: str, side: str, qty: float, price: float,
 def calculate_order_size(symbol: str, side: str,
                          price: float) -> dict[str, float]:
     """
-    BUY:  20% of TOTAL_CAPITAL (hard-capped at 25%).
-    SELL: quantity comes from the actual position at execution time.
+    BUY:  12% of TOTAL_CAPITAL (60% / 5 symbols, capped at 25%).
+    SELL: quantity comes from the actual position at execution.
     """
     if side == "BUY":
         usdt = TOTAL_CAPITAL * min(PER_SYMBOL_FRACTION, PER_SYMBOL_CAP)
@@ -287,16 +284,13 @@ def execute_signal(symbol: str, target: str, current: str,
     """
     Execute one signal change (CASH->LONG = BUY, LONG->CASH = SELL).
 
-    DRY_RUN:  print + log only, no exchange calls.
+    DRY_RUN:  print + log only.
     TESTNET:  real ccxt order against the sandbox server.
     LIVE:     real ccxt order against production.
-
-    Returns:
-        Result dict with status and fill details.
     """
     side = "BUY" if target == "LONG" else "SELL"
 
-    # ---- DRY RUN path (no exchange calls at all) ----
+    # ---- DRY RUN path ----
     if DRY_RUN:
         order = calculate_order_size(symbol, side, 1.0)
         msg = (f"[DRY RUN] {side} {symbol}: "
@@ -325,7 +319,8 @@ def execute_signal(symbol: str, target: str, current: str,
             msg = f"{symbol}: qty below exchange minimum - skipping"
             _log_execution(symbol, side, 0, price, usdt_val,
                            "SKIPPED", msg)
-            return {"symbol": symbol, "status": "SKIPPED", "reason": msg}
+            return {"symbol": symbol, "status": "SKIPPED",
+                    "reason": msg}
         qty = calc_qty
         usdt_val = qty * price
 
@@ -347,7 +342,6 @@ def execute_signal(symbol: str, target: str, current: str,
                                    "SKIPPED", msg)
                     return {"symbol": symbol, "status": "SKIPPED",
                             "reason": msg}
-                # Respect lot size on the sell quantity too
                 adj = _lot_size_qty(exchange, symbol,
                                     sell_qty * price, price)
                 qty = adj if adj else sell_qty
@@ -394,6 +388,7 @@ if __name__ == "__main__":
     else:
         print("  [DRY RUN] No exchange calls. Safe to run anytime.")
     print(f"Capital: {TOTAL_CAPITAL:.0f} USDT | "
+          f"Universe: {N_SYMBOLS} symbols | "
           f"Per-symbol: {PER_SYMBOL_FRACTION*100:.0f}% "
           f"= {TOTAL_CAPITAL * PER_SYMBOL_FRACTION:.0f} USDT")
     print("=" * 70)
@@ -410,7 +405,7 @@ if __name__ == "__main__":
         print(f"  {sym:10s} {s.get('position', 'CASH'):>5s}  "
               f"P={s.get('last_proba', 0):.3f}")
 
-    # ---- Confirmation gate (TESTNET and LIVE) ----
+    # ---- Confirmation gate ----
     if not DRY_RUN:
         print(f"\n{'='*70}")
         print(f"  Mode: {MODE_LABEL}")
@@ -427,7 +422,7 @@ if __name__ == "__main__":
             raise SystemExit(0)
         print("=" * 70)
 
-    # ---- Diff signals vs actual positions, execute changes ----
+    # ---- Diff and execute ----
     exchange = _get_exchange()
     open_positions = _fetch_open_positions(exchange)
 

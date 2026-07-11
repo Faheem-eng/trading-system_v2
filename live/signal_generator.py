@@ -52,7 +52,7 @@ from core.logger import get_logger
 from ml.targets.triple_barrier import compute_triple_barrier
 from ml.models.binary_1h import LGBM_PARAMS, _feature_cols
 from backtest.backtest_4h import _resample_4h_to_1d
-from live.paper_logger import log_trade
+from live.paper_logger import log_trade # type: ignore
 
 from features.base.price_features import compute_price_features
 from features.base.volume_features import compute_volume_features
@@ -82,7 +82,11 @@ TH_OUT = 0.45               # exit to CASH when P(up) crosses below
 EMBARGO = 25                # bars excluded before the prediction bar
 WARMUP = 300                # feature warmup bars dropped
 
-SYMBOLS = ["XRPUSDT", "SOLUSDT", "BTCUSDT"]
+# Universe expanded 2026-07-11: BNB + ADA added after 4h walk-forward
+# validation (4/5 folds IC>0) + overlay backtest (beats B&H).
+# LINK tested and REJECTED (overlay -45.9% vs B&H -46.5% — both
+# negative, no genuine value-add). AVAX/ETH/DOT/ATOM: not stable.
+SYMBOLS = ["XRPUSDT", "SOLUSDT", "BTCUSDT", "BNBUSDT", "ADAUSDT"]
 BTC = "BTCUSDT"             # cross-asset reference
 
 STATE_FILE = Path("signals/state.json")
@@ -167,8 +171,17 @@ def load_full_series(symbol: str) -> Optional[pd.DataFrame]:
     last_ms = int(hist["open_time"].max())
     fresh = fetch_fresh_4h(symbol, since_ms=last_ms + 1)
 
-    if fresh is None:
-        logger.warning(f"{symbol}: no fresh data - using historical only")
+    if fresh is None or len(fresh) == 0:
+        # Distinguish "no NEW bars yet" (normal when historical data
+        # is already current) from a genuine fetch failure upstream.
+        last_dt = datetime.fromtimestamp(last_ms / 1000, tz=timezone.utc)
+        age_hours = (datetime.now(timezone.utc) - last_dt).total_seconds() / 3600
+        if age_hours < 8:
+            logger.info(f"{symbol}: historical data already current "
+                        f"(last bar {age_hours:.1f}h old) - no new bars")
+        else:
+            logger.warning(f"{symbol}: no fresh data and historical is "
+                           f"{age_hours:.1f}h stale - investigate")
         fresh = pd.DataFrame()
 
     if len(fresh):
