@@ -1,18 +1,18 @@
 {
   "XRPUSDT": {
     "position": "CASH",
-    "since": "2026-07-12 12:37 UTC",
-    "last_proba": 0.5384
+    "since": "2026-07-13 06:50 UTC",
+    "last_proba": 0.5254
   },
   "SOLUSDT": {
-    "position": "LONG",
-    "since": "2026-07-12 12:37 UTC",
-    "last_proba": 0.5376
+    "position": "CASH",
+    "since": "2026-07-13 06:50 UTC",
+    "last_proba": 0.4157
   },
   "BTCUSDT": {
     "position": "LONG",
-    "since": "2026-07-12 12:37 UTC",
-    "last_proba": 0.5654
+    "since": "2026-07-13 06:50 UTC",
+    "last_proba": 0.4978
   },
   "MATICUSDT": {
     "position": "CASH",
@@ -21,12 +21,12 @@
   },
   "BNBUSDT": {
     "position": "LONG",
-    "since": "2026-07-12 12:37 UTC",
-    "last_proba": 0.6072
+    "since": "2026-07-13 06:50 UTC",
+    "last_proba": 0.5767
   },
   "ADAUSDT": {
     "position": "CASH",
-    "since": "2026-07-12 12:37 UTC",
-    "last_proba": 0.4449
+    "since": "2026-07-13 06:50 UTC",
+    "last_proba": 0.5178
   }
 }
