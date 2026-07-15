@@ -57,7 +57,8 @@ ENVELOPE_HIGH = 0.50
 
 ALLOCATION = 0.60          # capital fraction (SPEC §3)
 COST_PER_SIDE = 0.00125
-SYMBOLS = ["XRPUSDT", "SOLUSDT", "BTCUSDT"]
+# Universe v1.2.0 (SPEC sec.1): 5 symbols since 2026-07-11
+SYMBOLS = ["XRPUSDT", "SOLUSDT", "BTCUSDT", "BNBUSDT", "ADAUSDT"]
 
 
 def _fetch_price(symbol: str) -> Optional[float]:

@@ -26,8 +26,11 @@ ENCODING DISCIPLINE:
     run would crash on the final print. Production scripts must never
     fail on cosmetics.
 
-UNIVERSE (3 symbols, walk-forward validated):
-    XRPUSDT, SOLUSDT, BTCUSDT
+UNIVERSE (5 symbols, walk-forward validated — SPEC v1.2.0):
+    XRPUSDT, SOLUSDT, BTCUSDT (original, Phase 3-4)
+    BNBUSDT, ADAUSDT (added 2026-07-11 after overlay walk-forward:
+    each beats B&H in 3/5 folds with materially lower drawdowns;
+    both were in the original 12 pre-registered validation symbols)
     MATICUSDT retired 2026-07-08 (Binance MATIC->POL rebrand killed
     fresh data; POL rejected: only ~1.5yr history, our 4.5yr
     validation does not transfer). See docs/OPERATIONS_RUNBOOK.md.

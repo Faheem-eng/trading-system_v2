@@ -31,8 +31,8 @@ _load_env()
 API_KEY    = os.environ.get("BINANCE_API_KEY", "")
 API_SECRET = os.environ.get("BINANCE_API_SECRET", "")
 
-# Assets to liquidate to USDT (our trading universe)
-ASSETS_TO_SELL = ["SOL", "BTC", "XRP"]
+# Assets to liquidate to USDT (our trading universe, v1.2.0: 5 symbols)
+ASSETS_TO_SELL = ["SOL", "BTC", "XRP", "BNB", "ADA"]
 
 
 if __name__ == "__main__":

@@ -134,6 +134,38 @@ Earliest go-live: ~September 2026 (if envelope conditions met)
 
 ---
 
+## Universe Expansion v1.2.0 (2026-07-11, governance closed 2026-07-16)
+
+**What happened:** BNB + ADA were added to the production code on
+2026-07-11 (with validation), but SYSTEM_SPEC.md was not version-bumped —
+the locked spec still said 3 symbols while live code traded 5. An
+external audit (2026-07-16) flagged the drift; this entry closes it.
+
+**Re-verified evidence (overlay walk-forward, same methodology,
+reproduced 2026-07-16):**
+
+| Symbol | System | B&H | Beats B&H | wDD sys vs B&H |
+|---|---|---|---|---|
+| BNB | +33.98% | -4.16% | 3/5 folds | -26% vs -55% |
+| ADA | +45.37% | -54.89% | 3/5 folds | -51% vs -74% |
+| 5-sym portfolio | +134.67% | +22.72% | 4/5 folds alpha+ | -51% vs -74% |
+
+- Both symbols were in the original 12 pre-registered validation set
+  (multi_symbol_validation.py) — no scan-and-pick from the 56-symbol pool.
+- New symbols show the same edge character (bear-fold crash protection),
+  which is generalization evidence, not curve-fitting.
+- LINK tested and REJECTED (overlay -45.9% vs B&H -46.5%). AVAX/ETH/
+  DOT/ATOM not stable — not added.
+
+**Files brought in line:** SYSTEM_SPEC v1.2.0, README, RUNBOOK v1.1.0,
+signal_generator docstring, monthly_review (was silently reviewing only
+3 of 5 traded symbols — functional bug), testnet_check, testnet_reset.
+
+**Lesson:** Code change ≠ system change. A locked spec is only locked
+if every expansion lands in it the same day, with evidence.
+
+---
+
 ## Recurring Lessons (Apply To All Future Projects)
 
 1. **Pre-register before testing.** Results feel very

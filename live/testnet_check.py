@@ -46,7 +46,8 @@ API_SECRET = os.environ.get("BINANCE_API_SECRET", "")
 EXCHANGE   = os.environ.get("EXCHANGE", "bybit").lower()
 MODE       = os.environ.get("LIVE_TRADING", "false").lower()
 
-SYMBOLS = ["XRPUSDT", "SOLUSDT", "BTCUSDT"]
+# Universe v1.2.0 (SPEC sec.1): 5 symbols since 2026-07-11
+SYMBOLS = ["XRPUSDT", "SOLUSDT", "BTCUSDT", "BNBUSDT", "ADAUSDT"]
 
 
 def _build_exchange(api_key: str, api_secret: str):
