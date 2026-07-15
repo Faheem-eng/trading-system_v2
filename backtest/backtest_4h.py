@@ -207,6 +207,12 @@ def backtest_4h_symbol(symbol: str) -> Optional[dict[str, Any]]:
 
 
 if __name__ == "__main__":
+    # cp1252-safe console: this research script prints emoji/symbols; a run
+    # must never crash on cosmetics (Windows default console is cp1252).
+    import sys as _sys
+    if hasattr(_sys.stdout, "reconfigure"):
+        _sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     import time
 
     SYMBOLS = ["XRPUSDT", "SOLUSDT", "BTCUSDT", "MATICUSDT"]

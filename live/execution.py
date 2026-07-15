@@ -111,6 +111,8 @@ PER_SYMBOL_CAP      = 0.25      # hard ceiling, belt + suspenders
 MAX_RETRIES     = 3
 RETRY_DELAY_SEC = 5.0
 DUST_THRESHOLD_USDT = 10.0      # holdings below this = flat
+STALE_STATE_HOURS   = 6.0       # refuse to trade on signals older than this
+                                # (4h bar cadence + grace for scheduler jitter)
 
 STATE_FILE = Path("signals/state.json")
 EXEC_LOG   = Path("signals/execution_log.csv")
@@ -199,6 +201,22 @@ def _fetch_open_positions(exchange) -> dict[str, float]:
     except Exception as e:
         logger.error(f"Balance fetch failed - {e}")
     return positions
+
+
+def _fetch_free_usdt(exchange) -> float:
+    """
+    Free (spendable) USDT balance. Returns TOTAL_CAPITAL in DRY_RUN so the
+    dry path is unaffected; returns 0.0 on any failure so a BUY fails safe
+    (below the dust floor -> skipped) rather than over-spending blind.
+    """
+    if DRY_RUN:
+        return TOTAL_CAPITAL
+    try:
+        bal = exchange.fetch_balance()
+        return float(bal.get("free", {}).get("USDT", 0) or 0)
+    except Exception as e:
+        logger.error(f"USDT balance fetch failed - {e}")
+        return 0.0
 
 
 def _lot_size_qty(exchange, symbol: str, usdt_amount: float,
@@ -314,6 +332,20 @@ def execute_signal(symbol: str, target: str, current: str,
     qty = 0.0
 
     if side == "BUY":
+        # Safety: never attempt to spend more USDT than is actually free.
+        # The intended notional is TOTAL_CAPITAL-based (SPEC sec.3); this
+        # only clamps DOWN to reality, it never sizes up.
+        free_usdt = _fetch_free_usdt(exchange)
+        if usdt_val > free_usdt:
+            logger.warning(
+                f"{symbol}: intended {usdt_val:.2f} USDT exceeds free "
+                f"{free_usdt:.2f} - clamping to available balance")
+            usdt_val = free_usdt * 0.995   # buffer for fees / price drift
+        if usdt_val < DUST_THRESHOLD_USDT:
+            msg = (f"{symbol}: free USDT {free_usdt:.2f} too low to open "
+                   "position - skipping")
+            _log_execution(symbol, side, 0, price, usdt_val, "SKIPPED", msg)
+            return {"symbol": symbol, "status": "SKIPPED", "reason": msg}
         calc_qty = _lot_size_qty(exchange, symbol, usdt_val, price)
         if calc_qty is None:
             msg = f"{symbol}: qty below exchange minimum - skipping"
@@ -399,6 +431,20 @@ if __name__ == "__main__":
         raise SystemExit(1)
 
     state: dict[str, Any] = json.loads(STATE_FILE.read_text())
+
+    # ---- State freshness guard (fail-safe: never trade on stale signals) ----
+    state_age_h = (time.time() - STATE_FILE.stat().st_mtime) / 3600.0
+    if state_age_h > STALE_STATE_HOURS:
+        smsg = (f"state.json is {state_age_h:.1f}h old (> {STALE_STATE_HOURS}h) "
+                "- signal_generator may not have run this cycle")
+        logger.warning(smsg)
+        if DRY_RUN:
+            print(f"\n[!] WARNING: {smsg} (DRY_RUN: continuing)")
+        else:
+            print(f"\n[X] ABORT: {smsg}.\n    Refusing to trade on stale "
+                  "signals. Run 'python -m live.signal_generator' first.")
+            raise SystemExit(1)
+
     print("\nCurrent signals (from state.json):")
     for sym in SYMBOLS:
         s = state.get(sym, {})
@@ -425,6 +471,25 @@ if __name__ == "__main__":
     # ---- Diff and execute ----
     exchange = _get_exchange()
     open_positions = _fetch_open_positions(exchange)
+
+    # ---- Equity sanity: warn if configured capital has drifted from reality ----
+    # Sizing stays LOCKED to TOTAL_CAPITAL (SPEC sec.3); this only surfaces a
+    # mismatch so the operator can update .env, rather than silently drifting.
+    if not DRY_RUN:
+        _free = _fetch_free_usdt(exchange)
+        _held = 0.0
+        for _s in SYMBOLS:
+            _q = open_positions.get(_s, 0.0) or 0.0
+            if _q > 0:
+                _p = _fetch_ticker(exchange, _s) or 0.0
+                _held += _q * _p
+        _equity = _free + _held
+        if _equity > 0 and abs(_equity - TOTAL_CAPITAL) / max(TOTAL_CAPITAL, 1.0) > 0.20:
+            _note = (f"actual equity ~{_equity:.0f} USDT differs >20% from "
+                     f"TOTAL_CAPITAL_USDT={TOTAL_CAPITAL:.0f}")
+            print(f"[!] NOTE: {_note}. Update .env so sizing tracks real "
+                  "capital (SPEC sec.3: 60% allocation).")
+            logger.warning(_note)
 
     print(f"\n{'Symbol':10s} {'Signal':>7s} {'Actual':>7s} {'Action':>10s}")
     print("-" * 70)
