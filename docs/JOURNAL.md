@@ -166,6 +166,45 @@ if every expansion lands in it the same day, with evidence.
 
 ---
 
+## External Audit Completion (2026-07-16)
+
+Full independent validation pass over the system. Findings:
+
+**Verified clean (evidence, not trust):**
+- Backtest +145.96% reproduced exactly (deterministic, seed 42)
+- Walk-forward integrity: train always precedes test, EMBARGO 25 >
+  label horizon 20, no test-set peeking (fixed 100 rounds)
+- Symbol selection: 12 pre-registered, liquidity-chosen — no
+  scan-and-pick from the 56-symbol data pool
+- Leakage: 103/103 features clean (existing harness) **+ the 13
+  features it never covered** (MTF 7, cross-asset 6 — the two
+  multi-DataFrame modules) now corrupt-future tested on real AND
+  synthetic data: 13/13 clean. Permanent pytest coverage added
+  (tests/test_leakage_mtf_ca.py). 116/116 features verified.
+- Triple barrier: past-only ATR, labels-future-by-design correct,
+  final bars unlabeled. Minor note: intrabar upper/lower tie breaks
+  optimistic (upper first) — rare at 3xATR on 4h, not a leak.
+- Fake live taker_buy_volume (=0.5x volume on fresh ccxt bars):
+  quantified — taker features carry 0.38% of model gain, zero
+  decision flips across 5 symbols. No fix needed.
+
+**Fixed (safety branch `safety-fixes-exec-ascii`):**
+- execution.py: BUY clamped to actual free USDT; stale state.json
+  (>6h) aborts TESTNET/LIVE runs; equity-drift warning
+- 6 backtest scripts: cp1252-safe stdout (no more emoji crashes)
+- monthly_review.py: was reviewing only 3 of 5 traded symbols
+
+**Open (quantified, documented, NOT silently changed):**
+- Retrain cadence deviation — live retrains every 4h bar; validation
+  used fixed model per ~900-bar fold. Measured (120 bars, 5 symbols):
+  mean |dP| 0.02-0.05 but hysteresis amplifies it — position differs
+  ~20% of bars on 4/5 symbols, live shows extra switches on XRP/BNB.
+  Registered as SPEC known-risk #5. Phase 7 envelope gate is the
+  pre-registered exam for exactly this. If envelope fails, this is
+  suspect #1.
+
+---
+
 ## Recurring Lessons (Apply To All Future Projects)
 
 1. **Pre-register before testing.** Results feel very

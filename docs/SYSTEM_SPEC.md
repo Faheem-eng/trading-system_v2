@@ -84,6 +84,16 @@ vol_clustering, htf context).
 3. **Recent regime (F5) weak:** 2026 bear mein -18% (B&H -34%).
 4. **Backtest ≠ live:** Slippage, gaps, execution delays unmodeled.
    Phase 7 paper trading is the real exam.
+5. **Retrain cadence deviation (quantified 2026-07-16):** Validation ne
+   fixed model per ~900-bar fold use kiya; live har 4h bar pe retrain
+   karta hai (expanding window). Measured on last 120 bars, 5 symbols:
+   mean |dP| 0.02-0.05, max 0.14 — par hysteresis threshold ke paas isko
+   amplify karta hai: 4/5 symbols pe ~20% bars mein position alag, XRP/BNB
+   pe live protocol zyada switches (2->6, 1->5 = extra costs). Live
+   protocol as-such unvalidated hai; Phase 7 paper trading + monthly
+   envelope gate hi iska pre-registered exam hai. Agar envelope fail ho,
+   pehla suspect yahi deviation hai (fix: fixed-model + ~5-month retrain,
+   needs model persistence + revalidation).
 
 ## 7. OPERATIONAL PROTOCOL
 
